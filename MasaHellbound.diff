@@ -1,0 +1,123 @@
+diff --git a/dist/game/data/html/default/34257.htm b/dist/game/data/html/default/34257.htm
+new file mode 100644
+index 0000000000..af96bf90c0
+--- /dev/null
++++ b/dist/game/data/html/default/34257.htm
+@@ -0,0 +1,5 @@
++<html><body>Masa:<br>
++Hello there! Slaves that are brought to the Hellbound all become Beleth's test subjects.<br>
++Nobody ever talks about saving them. It's terrible!
++<br>
++</body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/ai/areas/HellboundIsland/Masa/Masa.java b/dist/game/data/scripts/ai/areas/HellboundIsland/Masa/Masa.java
+new file mode 100644
+index 0000000000..7714bad7c0
+--- /dev/null
++++ b/dist/game/data/scripts/ai/areas/HellboundIsland/Masa/Masa.java
+@@ -0,0 +1,90 @@
++/*
++ * This file is part of the L2J Mobius project.
++ * 
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ * 
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
++ * General Public License for more details.
++ * 
++ * You should have received a copy of the GNU General Public License
++ * along with this program. If not, see <http://www.gnu.org/licenses/>.
++ */
++package ai.areas.HellboundIsland.Masa;
++
++import java.util.HashSet;
++import java.util.Set;
++
++import org.l2jmobius.gameserver.enums.ChatType;
++import org.l2jmobius.gameserver.model.actor.Creature;
++import org.l2jmobius.gameserver.model.actor.Npc;
++import org.l2jmobius.gameserver.model.actor.Playable;
++import org.l2jmobius.gameserver.model.actor.Player;
++
++import ai.AbstractNpcAI;
++
++/**
++ * @author Notorion
++ */
++public class Masa extends AbstractNpcAI
++{
++    // NPC ID
++    private static final int MASA_NPC_ID = 34257;
++    // Radius
++    private static final int DETECTION_RADIUS = 450;
++    // Memory
++    private final Set<Player> seenPlayers = new HashSet<>();
++
++    private Masa()
++    {
++        addCreatureSeeId(MASA_NPC_ID);
++    }
++
++    @Override
++    public String onCreatureSee(Npc npc, Creature creature)
++    {
++        if (creature instanceof Playable)
++        {
++            final Player player = creature.getActingPlayer();
++            if ((player != null) && !seenPlayers.contains(player)) 
++            {
++                final double distance = npc.calculateDistance3D(player);
++                if (distance <= DETECTION_RADIUS)
++                {
++                    seenPlayers.add(player); 
++                    startQuestTimer("FIRST_MESSAGE", 0, npc, player);
++                }
++            }
++        }
++        return super.onCreatureSee(npc, creature);
++    }
++
++    @Override
++    public String onEvent(String event, Npc npc, Player player)
++    {
++        if (event.equals("FIRST_MESSAGE") && (npc != null))
++        {
++            npc.broadcastSay(ChatType.NPC_GENERAL, "Please return the experiment subjects to their original form!");
++            startQuestTimer("SECOND_MESSAGE", 5000, npc, player);
++            startQuestTimer("FORGET_PLAYER", 10000, npc, player); 
++        }
++        else if (event.equals("SECOND_MESSAGE") && (npc != null))
++        {
++            npc.broadcastSay(ChatType.NPC_GENERAL, "You may fall into danger with a sudden attack, so be careful!");
++        }
++        else if (event.equals("FORGET_PLAYER") && (npc != null) && (player != null))
++        {
++            seenPlayers.remove(player); 
++        }
++        return super.onEvent(event, npc, player);
++    }
++
++    public static void main(String[] args)
++    {
++        new Masa();
++    }
++}
+\ No newline at end of file
+diff --git a/dist/game/data/spawns/Hellbound/NpcBelethMagicCircle.xml b/dist/game/data/spawns/Hellbound/NpcBelethMagicCircle.xml
+new file mode 100644
+index 0000000000..b6ce72af30
+--- /dev/null
++++ b/dist/game/data/spawns/Hellbound/NpcBelethMagicCircle.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/spawns.xsd">
++	<spawn name="NpcBelethMagicCircle">
++		<group>
++			<npc id="34257" x="-21545" y="242992" z="-3145" heading="49833" respawnTime="60sec" /> <!-- Masa -->
++		</group>
++	</spawn>
++</list>
